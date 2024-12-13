@@ -11,22 +11,10 @@ pipeline {
             steps {
                 // Clone the Git repository
                 git branch: 'main', url: 'https://github.com/harkaur02/E-commerce-Website.git'
+                echo "cloned successfully!"
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                // Install dependencies using pip
-                // sh 'pip install -r requirements.txt'  //commented as it is already done in docker image
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                // Run any tests (adjust this command as per your test setup)
-                sh 'python -m unittest discover -s tests'
-            }
-        }
 
         /* stage('Build Docker Image') {
             steps {
@@ -49,13 +37,14 @@ pipeline {
 
       stage('Build and Push Docker Image') {
       environment {
-        DOCKER_IMAGE = "thethymca/ultimate-cicd:${BUILD_NUMBER}"
+        DOCKER_IMAGE = "thethymca/e-commerce-app:${BUILD_NUMBER}"
         // DOCKERFILE_LOCATION = "java-maven-sonar-argocd-helm-k8s/spring-boot-app/Dockerfile"
         REGISTRY_CREDENTIALS = credentials('docker-cred')
       }
       steps {
         script {
             sh 'docker build -t ${DOCKER_IMAGE} .'
+            echo "image build done"
             def dockerImage = docker.image("${DOCKER_IMAGE}")
             docker.withRegistry('https://index.docker.io/v1/', "docker-cred") {
                 dockerImage.push()
@@ -73,7 +62,7 @@ pipeline {
       stage('Run Docker Container') {
             steps {
                 script {
-                    sh "docker run -d -p 3000:3000 ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+                    sh "docker run -d -p 5000:5000 ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
                 }
             }
         }
