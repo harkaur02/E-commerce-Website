@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-commerce-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: e-commerce-app
+  template:
+    metadata:
+      labels:
+        app: e-commerce-app
+    spec:
+      containers:
+      - name: e-commerce-app
+        image: thethymca/e-commerce-app:16
+        ports:
+        - containerPort: 5000
