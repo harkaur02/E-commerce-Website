@@ -1,10 +1,11 @@
 pipeline {
     agent any
-
-    environment {
+     environment {
         // Set environment variables (if needed)
-        DOCKER_IMAGE = "thethymca/e-commerce-app"
-    }
+        DOCKER_IMAGE = "thethymca/e-commerce-app:${BUILD_NUMBER}"
+        // DOCKERFILE_LOCATION = "java-maven-sonar-argocd-helm-k8s/spring-boot-app/Dockerfile"
+        REGISTRY_CREDENTIALS = credentials('docker-cred')
+      }
 
     stages {
         stage('Clone Repository') {
@@ -36,44 +37,54 @@ pipeline {
         } */
 
       stage('Build and Push Docker Image') {
-      environment {
-        DOCKER_IMAGE = "thethymca/e-commerce-app:${BUILD_NUMBER}"
-        // DOCKERFILE_LOCATION = "java-maven-sonar-argocd-helm-k8s/spring-boot-app/Dockerfile"
-        REGISTRY_CREDENTIALS = credentials('docker-cred')
-      }
       steps {
         script {
             sh 'docker build -t ${DOCKER_IMAGE} .'
             echo "image build done"
-            def dockerImage = docker.image("${DOCKER_IMAGE}")
+            //def dockerImage = docker.image("${DOCKER_IMAGE}")
             docker.withRegistry('https://index.docker.io/v1/', "docker-cred") {
-                dockerImage.push()
+            //dockerImage.push()
+            sh 'docker push ${DOCKER_IMAGE}'
             }
         }
       }
     }
 
-        /*stage('Deploy') {
-            steps {
-                // Deploy using docker-compose or another deployment method
-                sh 'docker-compose up -d'
-            }
-        }*/
-      stage('Run Docker Container') {
+      /*stage('Run Docker Container') {
             steps {
                 script {
                     sh "docker run -d -p 5000:5000 ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
                 }
             }
         }
+    }*/
+    stage('Deploy to Kubernetes') { 
+        steps { 
+            script { 
+                echo "Deploying to Kubernetes..."
+                withKubeConfig(credentialsId: 'dop_v1_6f3f55d741784a9881848755084aa278c3311b6c95e4269a14a9baba1a4463ab') { 
+                    sh 'kubectl apply -f deployment.yaml' 
+                    sh 'kubectl apply -f service.yaml'
+                } 
+            } 
+        } 
     }
 
+    stage('Verify Deployment') {
+        steps    {
+            script    {
+                echo "Verifying deployment,,,"
+                sh 'kubectl get pods -l app=e-commerce-app'
+            }
+        }
+    }
+        
     post {
-        always {
+        /*always {
             // Clean up Docker images after build
             sh 'docker system prune -f'
             //sh 'docker rm -f $(docker ps -a -q) || true'
-        }
+        }*/
         success {
             echo 'Build and deployment successful!'
         }
