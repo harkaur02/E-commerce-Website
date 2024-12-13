@@ -71,8 +71,8 @@ pipeline {
     post {
         always {
             // Clean up Docker images after build
-            //sh 'docker system prune -f'
-            sh 'docker rm -f $(docker ps -a -q) || true'
+            sh 'docker system prune -f'
+            //sh 'docker rm -f $(docker ps -a -q) || true'
         }
         success {
             echo 'Build and deployment successful!'
